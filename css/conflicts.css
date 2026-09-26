@@ -1,0 +1,44 @@
+/* 1SCHED — Schedule Conflicts module */
+
+.conflict-table {
+    min-width: 1000px;
+}
+
+.conflicts-page .table td:nth-child(5) {
+    min-width: 240px;
+}
+
+.conflicts-page .table td:last-child {
+    min-width: 220px;
+}
+
+.conflict-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.conflict-actions .btn {
+    padding: 7px 10px;
+    font-size: 9px;
+    line-height: 1.2;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.conflict-actions .btn.primary {
+    background: #e8f3ff;
+    color: #15517a;
+    border-color: rgba(21, 81, 122, 0.18);
+}
+
+.conflict-actions .btn.danger {
+    background: #ffeae8;
+    color: #b42318;
+    border-color: rgba(180, 35, 24, 0.18);
+}
+
+.conflicts-page .empty {
+    border-top: 1px solid var(--border);
+}

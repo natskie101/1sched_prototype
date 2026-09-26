@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>1SCHED - Clinical Scheduling and Salary Report</title>
+
+    <!-- External resources -->
+    <!-- Modular CSS -->
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/users.css">
+    <link rel="stylesheet" href="css/schedules.css">
+    <link rel="stylesheet" href="css/conflicts.css">
+    <link rel="stylesheet" href="css/salary.css">
+    <link rel="stylesheet" href="css/print.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+    <!-- =========================================================
+         LOGIN
+    ========================================================== -->
+    <div id="login" class="login">
+        <div class="login-card">
+
+            <div class="login-logo">
+                <img class="brand-image brand-image-login" src="assets/1schedlogoblg.png" alt="1SCHED logo">
+                <p>Scheduling and Salary Report System</p>
+            </div>
+
+            <div class="field">
+                <label for="loginUser">Username</label>
+                <input id="loginUser" value="admin" autocomplete="username">
+            </div>
+
+            <div class="field">
+                <label for="loginPass">Password</label>
+                <input
+                    id="loginPass"
+                    type="password"
+                    value="admin123"
+                    autocomplete="current-password"
+                >
+            </div>
+
+            <button class="btn primary btn-full" onclick="login()">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                Sign In
+            </button>
+
+            <div class="footer-note">
+                Demo account: <strong>admin</strong> / <strong>admin123</strong>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- =========================================================
+         APPLICATION
+    ========================================================== -->
+    <div id="app" class="app hidden">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+
+            <div class="brand">
+                <img class="brand-image brand-image-sidebar" src="assets/1schedlogoblg.png" alt="1SCHED logo">
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <nav class="nav" aria-label="Main navigation">
+
+                <button
+                    data-page="dashboard"
+                    class="active"
+                    onclick="showPage('dashboard')"
+                >
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </button>
+
+                <div class="nav-group schedules-nav">
+                    <button
+                        class="nav-parent"
+                        data-parent="schedules"
+                        onclick="toggleScheduleMenu()"
+                        aria-expanded="true"
+                    >
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Schedule Management</span>
+                        <i class="fa-solid fa-chevron-down nav-caret"></i>
+                    </button>
+
+                    <div class="subnav open" id="scheduleSubnav">
+                        <button
+                            data-page="schedules"
+                            class="sub-nav-item"
+                            onclick="showPage('schedules')"
+                        >
+                            <span>Actual Schedule</span>
+                        </button>
+
+                        <button
+                            data-page="conflicts"
+                            class="sub-nav-item"
+                            onclick="showPage('conflicts')"
+                        >
+                            <span>Conflicts</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button
+                    data-page="salary"
+                    onclick="showPage('salary')"
+                >
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Salary Report</span>
+                </button>
+
+                <button
+                    data-page="users"
+                    onclick="showPage('users')"
+                >
+                    <i class="fa-solid fa-users"></i>
+                    <span>User Management</span>
+                </button>
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+
+        </aside>
+
+
+        <!-- MAIN CONTENT -->
+        <main class="main">
+
+            <header class="topbar">
+
+                <div class="top-title">
+                    <div class="breadcrumb">
+                        1SCHED <span>/</span> Academic & Clinical Operations
+                    </div>
+
+                    <h2 id="pageTitle">Dashboard</h2>
+
+                    <p id="pageSubtitle">
+                        Academic Year 2026-2027
+                    </p>
+                </div>
+
+                <div class="profile">
+
+                    <div class="profile-info">
+                        <strong>Administrator</strong>
+                        <span>System Administrator</span>
+                    </div>
+
+                    <div class="avatar">A</div>
+
+                </div>
+
+            </header>
+
+
+            <!-- PAGE CONTENT -->
+            <section class="page" id="content"></section>
+
+        </main>
+
+    </div>
+
+
+    <!-- =========================================================
+         MODAL
+    ========================================================== -->
+    <div id="modal" class="modal hidden">
+
+        <div class="modal-box">
+
+            <div class="modal-head">
+
+                <div>
+                    <div class="modal-kicker">1SCHED</div>
+                    <h3 id="modalTitle">Modal</h3>
+                </div>
+
+                <button
+                    class="x"
+                    onclick="closeModal()"
+                    aria-label="Close modal"
+                >
+                    &times;
+                </button>
+
+            </div>
+
+            <div id="modalBody"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MODULAR APPLICATION SCRIPTS -->
+    <script type="module" src="1sched-js/app.js?v=20260926-demo-double-booked-conflict"></script>
+
+</body>
+</html>

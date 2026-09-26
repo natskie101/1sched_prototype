@@ -1,0 +1,150 @@
+/* 1SCHED — Schedule Management module */
+
+/* CALENDAR */
+.calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-top: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+}
+
+.cal-head {
+    padding: 10px;
+
+    color: #475569;
+    background: #f7f9fb;
+
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.cal-cell {
+    min-height: 92px;
+    padding: 7px;
+
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.date {
+    margin-bottom: 6px;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.event {
+    margin-bottom: 4px;
+    padding: 5px 6px;
+
+    color: #174e6d;
+    background: #eef6f9;
+    border-left: 2px solid var(--accent);
+    border-radius: 3px;
+
+    font-size: 8px;
+    line-height: 1.3;
+}
+
+.schedule-toolbar {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.schedule-toolbar .search {
+    flex: 1 1 180px;
+    min-width: 180px;
+}
+
+.schedule-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-select {
+    min-width: 140px;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
+    font-size: 12px;
+}
+
+.schedule-data-table {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #ffffff;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.schedule-table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 980px;
+}
+
+.schedule-table th {
+    padding: 12px 14px;
+    background: #f8fafc;
+    color: #475569;
+    border-bottom: 1px solid var(--border);
+    font-size: 9px;
+    letter-spacing: 0.24px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.schedule-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #edf2f7;
+    color: #1f2937;
+    font-size: 11px;
+    vertical-align: middle;
+}
+
+.schedule-table tbody tr:nth-child(even) {
+    background: #fbfdff;
+}
+
+.schedule-table tbody tr:hover {
+    background: #f5f9ff;
+}
+
+.exp-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    padding: 6px 8px;
+    border: 1px solid #d8ebf7;
+    border-radius: 999px;
+    background: #f1f8ff;
+    color: #125d8a;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.schedule-table .actions {
+    gap: 6px;
+}
+
+/* Schedule-specific refinements */
+.schedules-page .calendar {
+    margin-top: 2px;
+}
+
+.schedules-page .event {
+    cursor: default;
+}

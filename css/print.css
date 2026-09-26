@@ -1,0 +1,11 @@
+/* 1SCHED — Print styles */
+
+@media print {
+    body { background: #fff !important; }
+    .sidebar, .topbar, .salary-controls, .modal, .btn, .toolbar { display: none !important; }
+    .main { width: 100% !important; margin: 0 !important; }
+    .page { max-width: none !important; padding: 0 !important; }
+    .card { border: 0 !important; box-shadow: none !important; }
+    .salary-report-sheet { border: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
+    .table th { background: #f2f2f2 !important; color: #000 !important; }
+}

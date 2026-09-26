@@ -1,0 +1,74 @@
+/* 1SCHED — Dashboard module */
+
+/* DASHBOARD */
+.grid {
+    display: grid;
+    gap: 16px;
+}
+
+.stats {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.dashboard-grid {
+    grid-template-columns: 2fr 1fr;
+}
+
+.stat {
+    min-height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+.label {
+    margin-bottom: 9px;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.value {
+    color: var(--primary);
+    font-size: 27px;
+    font-weight: 700;
+}
+
+.icon {
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--primary);
+    background: var(--primary-light);
+    border-radius: 6px;
+}
+
+.kpi-list {
+    padding: 6px 18px 15px;
+}
+
+.kpi-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 13px 0;
+
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.kpi-row:last-child {
+    border-bottom: 0;
+}
+
+.kpi-row strong {
+    color: var(--text);
+}

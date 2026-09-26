@@ -1,0 +1,222 @@
+/* 1SCHED — User Management module */
+
+.user-form {
+    background: #ffffff;
+    color: var(--text);
+}
+
+.user-form-section {
+    border-top: 1px solid #edf2f7;
+    padding-top: 10px;
+}
+
+.user-form-title {
+    margin-bottom: 18px;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.user-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 18px;
+}
+
+.user-form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.user-form .field {
+    margin-bottom: 0;
+}
+
+.user-form .field label {
+    display: block;
+    margin-bottom: 6px;
+    color: #3b4859;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.user-form .field label span {
+    color: #d92d20;
+}
+
+.user-form .field input,
+.user-form .field select {
+    width: 100%;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid #d9e0eb;
+    border-radius: 6px;
+    background: #ffffff;
+    color: var(--text);
+    font-size: 12px;
+}
+
+.user-form .field input:focus,
+.user-form .field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(31, 111, 139, 0.08);
+    outline: none;
+}
+
+.radio-group {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    min-height: 38px;
+    padding: 0 2px;
+}
+
+.radio-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.radio-option input[type="radio"] {
+    width: 15px;
+    height: 15px;
+    accent-color: #1e89c7;
+}
+
+.user-form .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid #edf2f7;
+}
+
+.user-form .btn {
+    min-width: 110px;
+}
+
+.users-page .user-table-card {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    overflow: hidden;
+}
+
+.users-page .user-head {
+    padding: 18px 18px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.users-page .user-head h3 {
+    color: var(--text);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.users-page .user-table {
+    width: 100%;
+    min-width: 1100px;
+    border-collapse: collapse;
+    background: transparent;
+}
+
+.users-page .user-table th {
+    padding: 12px 14px;
+    background: #f8fafc;
+    color: #475569;
+    border-bottom: 1px solid var(--border);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.users-page .user-table td {
+    padding: 12px 14px;
+    color: var(--text);
+    border-bottom: 1px solid #edf2f7;
+    font-size: 11px;
+    vertical-align: middle;
+}
+
+.users-page .user-table tbody tr:nth-child(even) {
+    background: #fbfdff;
+}
+
+.users-page .user-table tbody tr:hover {
+    background: #f5f9ff;
+}
+
+.users-page .user-table th:last-child,
+.users-page .user-table td:last-child {
+    text-align: right;
+}
+
+.users-page .user-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.users-page .user-action-btn {
+    background: #eaf3fb;
+    color: #1d5f86;
+    border-color: rgba(29, 95, 134, 0.18);
+}
+
+.users-page .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 22px;
+    padding: 0 8px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.users-page .badge.blue {
+    color: #15517a;
+    background: #eaf3fa;
+    border: 1px solid rgba(21, 81, 122, 0.12);
+}
+
+.users-page .badge.green {
+    color: #17643c;
+    background: var(--success-light);
+    border: 1px solid rgba(23, 100, 60, 0.1);
+}
+
+.users-page .btn.primary {
+    background: var(--accent);
+    border-color: rgba(31, 111, 139, 0.2);
+    color: #ffffff;
+}
+
+.users-page .btn.danger {
+    background: var(--danger-light);
+    color: var(--danger);
+    border-color: rgba(180, 35, 24, 0.12);
+}
+
+.users-page .btn.sm {
+    padding: 5px 9px;
+    font-size: 9px;
+    border-radius: 4px;
+}
+
+.users-page .table td:nth-child(5) {
+    white-space: nowrap;
+}
