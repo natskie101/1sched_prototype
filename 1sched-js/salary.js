@@ -15,35 +15,35 @@ const REPORT = {
   status: 'APPROVED'
 };
 
+function getInstructorMatches(query = '') {
+  const normalized = query.trim().toLowerCase();
+
+  if (!normalized) {
+    return state.users.slice(0, 8);
+  }
+
+  return state.users.filter(user =>
+    `${user.name} ${user.employeeId} ${user.dept || ''} ${user.unit || ''}`.toLowerCase().includes(normalized)
+  ).slice(0, 8);
+}
+
 function getSelectedUser() {
+  const query = (get('salarySearch')?.value || '').trim().toLowerCase();
+  if (query) {
+    const matchedUser = state.users.find(user =>
+      `${user.name} ${user.employeeId} ${user.email || ''}`.toLowerCase().includes(query)
+    );
+    if (matchedUser) return matchedUser;
+    return null;
+  }
+
   const instructorValue = get('salaryInstructor')?.value;
   if (instructorValue) {
     const selectedUser = state.users.find(user => String(user.id) === String(instructorValue));
     if (selectedUser) return selectedUser;
   }
 
-  const query = (get('salarySearch')?.value || '').trim().toLowerCase();
-  if (!query) {
-    return state.users[0] || {
-      name: REPORT.instructor,
-      employeeId: REPORT.employeeId,
-      dept: REPORT.department,
-      unit: REPORT.unit,
-      role: 'INSTRUCTOR'
-    };
-  }
-
-  const matchedUser = state.users.find(user =>
-    `${user.name} ${user.employeeId} ${user.email || ''}`.toLowerCase().includes(query)
-  );
-
-  return matchedUser || state.users[0] || {
-    name: REPORT.instructor,
-    employeeId: REPORT.employeeId,
-    dept: REPORT.department,
-    unit: REPORT.unit,
-    role: 'INSTRUCTOR'
-  };
+  return null;
 }
 
 function toISODate(date) {
@@ -57,18 +57,29 @@ export function salaryTotal(rows) {
 }
 
 function selectedRows() {
+  const query = (get('salarySearch')?.value || '').trim().toLowerCase();
   const selectedUser = getSelectedUser();
-  const query = (get('salarySearch')?.value || selectedUser?.name || '').trim().toLowerCase();
   const startValue = get('salaryStartDate')?.value || '2026-01-01';
   const endValue = get('salaryEndDate')?.value || '2026-12-31';
   const startDate = new Date(`${startValue}T00:00:00`);
   const endDate = new Date(`${endValue}T23:59:59`);
 
+  if (!selectedUser && !query) {
+    return state.salaryRecords.filter(row => {
+      const date = new Date(`${row.date}T00:00:00`);
+      return date >= startDate && date <= endDate;
+    });
+  }
+
+  if (!selectedUser) {
+    return [];
+  }
+
   return state.salaryRecords.filter(row => {
     const date = new Date(`${row.date}T00:00:00`);
     const matchesDate = date >= startDate && date <= endDate;
-    const searchable = `${selectedUser?.name || ''} ${selectedUser?.employeeId || ''} ${selectedUser?.dept || ''} ${selectedUser?.unit || ''}`.toLowerCase();
-    const matchesUser = !query || searchable.includes(query);
+    const searchable = `${selectedUser.name} ${selectedUser.employeeId || ''} ${selectedUser.dept || ''} ${selectedUser.unit || ''}`.toLowerCase();
+    const matchesUser = !query || searchable.includes(query) || !selectedUser;
     return matchesDate && matchesUser;
   });
 }
@@ -155,21 +166,151 @@ function buildReportMarkup(rows) {
   };
 }
 
-export function renderSalaryReport() {
-  const rows = selectedRows();
+function getUserRows(user) {
+  if (!user) return [];
+
+  const startValue = get('salaryStartDate')?.value || '2026-01-01';
+  const endValue = get('salaryEndDate')?.value || '2026-12-31';
+  const startDate = new Date(`${startValue}T00:00:00`);
+  const endDate = new Date(`${endValue}T23:59:59`);
+  const query = (get('salarySearch')?.value || '').trim().toLowerCase();
+
+  return state.salaryRecords.filter(row => {
+    const date = new Date(`${row.date}T00:00:00`);
+    const matchesDate = date >= startDate && date <= endDate;
+    const searchable = `${user.name} ${user.employeeId || ''}`.toLowerCase();
+    const matchesSearch = !query || searchable.includes(query);
+    return matchesDate && matchesSearch;
+  });
+}
+
+function buildReportSheetMarkup(rows, reportUser) {
   const report = buildReportMarkup(rows);
+  const reportName = reportUser?.name || 'All Instructors';
+  const reportEmployeeId = reportUser?.employeeId || 'ALL INSTRUCTORS';
+  const reportDept = reportUser?.dept || 'Multiple departments';
+  const reportUnit = reportUser?.unit || 'Combined salary report';
   const totalHours = rows.reduce((sum, row) => sum + Number(row.hours || 0), 0);
+
+  return `
+    <div class="salary-report-topline"></div>
+
+    <header class="salary-report-header">
+      <div class="report-document-label">
+        <span>OFFICIAL DOCUMENT</span>
+        <strong>MONTHLY SALARY REPORT</strong>
+        <small>${report.period}</small>
+      </div>
+    </header>
+
+    <div class="salary-report-title-row">
+      <div>
+        <span class="eyebrow">ACADEMIC & CLINICAL OPERATIONS</span>
+        <h2>Monthly Salary Report</h2>
+        <p>Academic Year 2026–2027</p>
+      </div>
+      <div class="approval-stamp">
+        <i class="fa-solid fa-circle-check"></i>
+        <div><span>REPORT STATUS</span><strong>${REPORT.status}</strong></div>
+      </div>
+    </div>
+
+    <div class="salary-stat-strip">
+      <div><span>Duty Records</span><strong>${rows.length}</strong></div>
+      <div><span>Total Duty Hours</span><strong>${totalHours}</strong></div>
+      <div><span>Report Period</span><strong>${report.period}</strong></div>
+      <div><span>Billing Date</span><strong>${REPORT.billingDate}</strong></div>
+    </div>
+
+    <div class="salary-information">
+      <div class="information-block">
+        <span>INSTRUCTOR</span>
+        <strong>${reportName}</strong>
+        <small>Employee ID: ${reportEmployeeId}</small>
+      </div>
+      <div class="information-block">
+        <span>DEPARTMENT / UNIT</span>
+        <strong>${reportDept}</strong>
+        <small>${reportUnit}</small>
+      </div>
+      <div class="information-block">
+        <span>REPORT PERIOD</span>
+        <strong>${report.period}</strong>
+        <small>Billing Date: ${REPORT.billingDate}</small>
+      </div>
+      <div class="information-block status-block">
+        <span>STATUS</span>
+        <strong>${REPORT.status}</strong>
+        <small>For verification and approval</small>
+      </div>
+    </div>
+
+    <div class="salary-table-section">
+      <div class="table-caption">
+        <div><strong>Duty and Compensation Records</strong><span>Verified activities included in this monthly statement</span></div>
+        <span>${rows.length} RECORDS</span>
+      </div>
+      <div class="salary-table-wrap">
+        <table class="salary-table">
+          <thead>
+            <tr>
+              <th>DATE</th>
+              <th>AREA OF EXPOSURE</th>
+              <th>TIME</th>
+              <th class="center">HRS</th>
+              <th>REMARKS</th>
+              <th class="right">HR RATE</th>
+              <th>SIGNATURE</th>
+              <th>ATTESTATION</th>
+            </tr>
+          </thead>
+          <tbody>${renderSalaryRows(rows)}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <section class="salary-computation">
+      ${renderSummary(rows)}
+    </section>
+
+    <footer class="salary-report-footer">
+      <div class="prepared-note"><i class="fa-solid fa-circle-info"></i> This report is generated from recorded clinical and academic duty schedules in 1SCHED.</div>
+      <div class="signature-grid">
+        <div class="signature-box"><div class="signature-line"></div><strong>${reportName}</strong><span>Clinical Instructor</span></div>
+        <div class="signature-box"><div class="signature-line"></div><strong>Department Chairperson</strong><span>College of Nursing & Midwifery</span></div>
+        <div class="signature-box"><div class="signature-line"></div><strong>VP for Academic Affairs / Finance</strong><span>Human Resources & Payroll</span></div>
+      </div>
+    </footer>
+  `;
+}
+
+function renderReportSheet(rows, reportUser) {
+  const sheet = get('salaryReportSheet');
+  if (!sheet) return;
+  sheet.innerHTML = buildReportSheetMarkup(rows, reportUser);
+}
+
+function renderAllInstructorReports() {
+  const sheet = get('salaryReportSheet');
+  if (!sheet) return;
+
+  const instructorUsers = state.users.filter(user => user.role === 'INSTRUCTOR');
+  sheet.innerHTML = instructorUsers.map(user => {
+    const rows = getUserRows(user);
+    return `<div class="salary-report-stack-item">${buildReportSheetMarkup(rows, user)}</div>`;
+  }).join('');
+}
+
+export function renderSalaryReport() {
+  const currentQuery = (get('salarySearch')?.value || '').trim();
   const reportUser = getSelectedUser();
-  const reportName = reportUser?.name || REPORT.instructor;
-  const reportEmployeeId = reportUser?.employeeId || REPORT.employeeId;
-  const reportDept = reportUser?.dept || REPORT.department;
-  const reportUnit = reportUser?.unit || REPORT.unit;
+  const rows = selectedRows();
   const defaultStart = '2026-01-01';
   const defaultEnd = '2026-12-31';
+  const matches = currentQuery ? getInstructorMatches(currentQuery) : [];
 
   get('content').innerHTML = `
     <div class="salary-module">
-
       <section class="salary-controls card">
         <div class="salary-controls-title">
           <div class="salary-section-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
@@ -183,16 +324,20 @@ export function renderSalaryReport() {
         <div class="salary-filter-grid">
           <div class="salary-filter salary-search-filter">
             <label for="salarySearch">INSTRUCTOR NAME / EMPLOYEE ID</label>
-            <div class="salary-input-icon">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              <input id="salarySearch" value="${esc(reportName)}" placeholder="Search instructor or employee ID">
+            <div class="salary-search-with-list">
+              <div class="salary-input-icon">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input id="salarySearch" value="${esc(currentQuery)}" placeholder="Search instructor or employee ID">
+              </div>
+              <div class="salary-search-results" ${currentQuery ? '' : 'style="display:none"'}>
+                ${currentQuery ? (matches.length ? matches.map(user => `
+                  <button type="button" class="salary-search-result" data-user-id="${user.id}">
+                    <span>${esc(user.name)}</span>
+                    <small>${esc(user.employeeId || 'Employee ID')}</small>
+                  </button>
+                `).join('') : '<div class="salary-search-empty">No instructor found</div>') : ''}
+              </div>
             </div>
-          </div>
-          <div class="salary-filter">
-            <label for="salaryInstructor">INSTRUCTOR</label>
-            <select id="salaryInstructor">
-              ${state.users.map(user => `<option value="${user.id}" ${String(user.id) === String(reportUser?.id || '') ? 'selected' : ''}>${esc(user.name)}</option>`).join('')}
-            </select>
           </div>
           <div class="salary-filter">
             <label for="salaryStartDate">START DATE</label>
@@ -208,113 +353,78 @@ export function renderSalaryReport() {
         </div>
       </section>
 
-      <section class="salary-report-sheet" id="salaryReportSheet">
-        <div class="salary-report-topline"></div>
-
-        <header class="salary-report-header">
-          <div class="report-document-label">
-            <span>OFFICIAL DOCUMENT</span>
-            <strong>MONTHLY SALARY REPORT</strong>
-            <small>${report.period}</small>
-          </div>
-        </header>
-
-        <div class="salary-report-title-row">
-          <div>
-            <span class="eyebrow">ACADEMIC & CLINICAL OPERATIONS</span>
-            <h2>Monthly Salary Report</h2>
-            <p>Academic Year 2026–2027</p>
-          </div>
-          <div class="approval-stamp">
-            <i class="fa-solid fa-circle-check"></i>
-            <div><span>REPORT STATUS</span><strong>${REPORT.status}</strong></div>
-          </div>
-        </div>
-
-        <div class="salary-stat-strip">
-          <div><span>Duty Records</span><strong>${rows.length}</strong></div>
-          <div><span>Total Duty Hours</span><strong>${totalHours}</strong></div>
-          <div><span>Report Period</span><strong>${report.period}</strong></div>
-          <div><span>Billing Date</span><strong>${REPORT.billingDate}</strong></div>
-        </div>
-
-        <div class="salary-information">
-          <div class="information-block">
-            <span>INSTRUCTOR</span>
-            <strong>${reportName}</strong>
-            <small>Employee ID: ${reportEmployeeId}</small>
-          </div>
-          <div class="information-block">
-            <span>DEPARTMENT / UNIT</span>
-            <strong>${reportDept}</strong>
-            <small>${reportUnit}</small>
-          </div>
-          <div class="information-block">
-            <span>REPORT PERIOD</span>
-            <strong>${report.period}</strong>
-            <small>Billing Date: ${REPORT.billingDate}</small>
-          </div>
-          <div class="information-block status-block">
-            <span>STATUS</span>
-            <strong>${REPORT.status}</strong>
-            <small>For verification and approval</small>
-          </div>
-        </div>
-
-        <div class="salary-table-section">
-          <div class="table-caption">
-            <div><strong>Duty and Compensation Records</strong><span>Verified activities included in this monthly statement</span></div>
-            <span>${rows.length} RECORDS</span>
-          </div>
-          <div class="salary-table-wrap">
-            <table class="salary-table">
-              <thead>
-                <tr>
-                  <th>DATE</th>
-                  <th>AREA OF EXPOSURE</th>
-                  <th>TIME</th>
-                  <th class="center">HRS</th>
-                  <th>REMARKS</th>
-                  <th class="right">HR RATE</th>
-                  <th>SIGNATURE</th>
-                  <th>ATTESTATION</th>
-                </tr>
-              </thead>
-              <tbody>${renderSalaryRows(rows)}</tbody>
-            </table>
-          </div>
-        </div>
-
-        <section class="salary-computation">
-          ${renderSummary(rows)}
-        </section>
-
-        <footer class="salary-report-footer">
-          <div class="prepared-note"><i class="fa-solid fa-circle-info"></i> This report is generated from recorded clinical and academic duty schedules in 1SCHED.</div>
-          <div class="signature-grid">
-            <div class="signature-box"><div class="signature-line"></div><strong>${reportName}</strong><span>Clinical Instructor</span></div>
-            <div class="signature-box"><div class="signature-line"></div><strong>Department Chairperson</strong><span>College of Nursing & Midwifery</span></div>
-            <div class="signature-box"><div class="signature-line"></div><strong>VP for Academic Affairs / Finance</strong><span>Human Resources & Payroll</span></div>
-          </div>
-        </footer>
-      </section>
+      <section class="salary-report-sheet" id="salaryReportSheet"></section>
     </div>
   `;
 
-  ['salarySearch','salaryInstructor','salaryStartDate','salaryEndDate'].forEach(id => {
-    const element = get(id);
-    if (element) element.addEventListener(id === 'salarySearch' ? 'input' : 'change', renderSalaryReport);
+  const searchInput = get('salarySearch');
+  if (searchInput) {
+    searchInput.oninput = () => {
+      const query = (searchInput.value || '').trim();
+      const list = document.querySelector('.salary-search-results');
+      const matchedUsers = query ? getInstructorMatches(query) : [];
+
+      if (list) {
+        list.style.display = query ? 'flex' : 'none';
+        list.innerHTML = query
+          ? (matchedUsers.length
+              ? matchedUsers.map(user => `
+                  <button type="button" class="salary-search-result" data-user-id="${user.id}">
+                    <span>${esc(user.name)}</span>
+                    <small>${esc(user.employeeId || 'Employee ID')}</small>
+                  </button>
+                `).join('')
+              : '<div class="salary-search-empty">No instructor found</div>')
+          : '';
+      }
+
+      document.querySelectorAll('.salary-search-result').forEach(button => {
+        button.addEventListener('click', () => {
+          const selectedUser = state.users.find(user => String(user.id) === String(button.dataset.userId));
+          if (!selectedUser) return;
+
+          const input = get('salarySearch');
+          if (input) input.value = selectedUser.name;
+          if (list) list.style.display = 'none';
+          renderReportSheet(getUserRows(selectedUser), selectedUser);
+        });
+      });
+    };
+  }
+
+  document.querySelectorAll('.salary-search-result').forEach(button => {
+    button.addEventListener('click', () => {
+      const selectedUser = state.users.find(user => String(user.id) === String(button.dataset.userId));
+      if (!selectedUser) return;
+
+      const input = get('salarySearch');
+      if (input) input.value = selectedUser.name;
+      const list = document.querySelector('.salary-search-results');
+      if (list) list.style.display = 'none';
+      renderReportSheet(getUserRows(selectedUser), selectedUser);
+    });
   });
+
+  const startDateInput = get('salaryStartDate');
+  const endDateInput = get('salaryEndDate');
+  if (startDateInput) startDateInput.onchange = () => renderSalaryReport();
+  if (endDateInput) endDateInput.onchange = () => renderSalaryReport();
+
+  if (!currentQuery && !reportUser) {
+    renderAllInstructorReports();
+  } else {
+    renderReportSheet(rows, reportUser);
+  }
 }
 
 export function printSalaryReport() {
   const rows = selectedRows();
   const report = buildReportMarkup(rows);
   const selectedUser = getSelectedUser();
-  const reportName = selectedUser?.name || REPORT.instructor;
-  const reportEmployeeId = selectedUser?.employeeId || REPORT.employeeId;
-  const reportDept = selectedUser?.dept || REPORT.department;
-  const reportUnit = selectedUser?.unit || REPORT.unit;
+  const reportName = selectedUser?.name || 'All Instructors';
+  const reportEmployeeId = selectedUser?.employeeId || 'ALL INSTRUCTORS';
+  const reportDept = selectedUser?.dept || 'Multiple departments';
+  const reportUnit = selectedUser?.unit || 'Combined salary report';
   const popup = window.open('', '_blank', 'width=1200,height=850');
 
   if (!popup) {
