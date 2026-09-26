@@ -440,9 +440,7 @@
 }
 
 .salary-table-wrap {
-    max-height: 360px;
-    overflow-y: auto;
-    overflow-x: auto;
+    overflow: visible;
 }
 
 .salary-table {
