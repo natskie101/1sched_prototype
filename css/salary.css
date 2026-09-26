@@ -173,8 +173,7 @@
 
 .salary-report-sheet {
     position: relative;
-    max-height: 76vh;
-    overflow-y: auto;
+    overflow: visible;
     background: #fff;
     border: 1px solid #d7dee7;
     border-radius: 7px;
