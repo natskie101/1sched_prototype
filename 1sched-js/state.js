@@ -6,10 +6,10 @@ export const state = {
     {id:4,name:'Angela Reyes',employeeId:'CI-2026-003',role:'INSTRUCTOR',dept:'BS NURSING',unit:'Clinical Instruction & Community Health',rate:450,status:'Active'}
   ],
   schedules: [
-    {id:1,date:'2026-09-21',daysInclusive:'MTW',area:'D.O. Plaza Memorial Hospital',program:'BS NURSING',year:'4',section:'Sec A',group:'Group 1',students:10,instructor:'Maria Santos',start:'06:00',end:'14:00',room:'Ward A',type:'Clinical Duty',remarks:''},
-    {id:2,date:'2026-09-22',daysInclusive:'TTH',area:'Rural Health Unit',program:'BS MIDWIFERY',year:'3',section:'Sec B',group:'Group 2',students:8,instructor:'John Dela Cruz',start:'08:00',end:'16:00',room:'RHU',type:'Community Duty',remarks:''},
-    {id:3,date:'2026-09-23',daysInclusive:'MTW',area:'D.O. Plaza Memorial Hospital',program:'BS NURSING',year:'4',section:'Sec A',group:'Group 2',students:10,instructor:'Unassigned',start:'06:00',end:'14:00',room:'Ward A',type:'Clinical Duty',remarks:''},
-    {id:4,date:'2026-09-21',daysInclusive:'WTH',area:'Rural Health Unit',program:'BS NURSING',year:'3',section:'Sec C',group:'Group 3',students:12,instructor:'Maria Santos',start:'08:00',end:'12:00',room:'ICU',type:'Clinical Duty',remarks:''}
+    {id:1,date:'2026-09-21',daysInclusive:'MTW',area:'D.O. Plaza Memorial Hospital',program:'BS NURSING',year:'4',section:'Sec A',group:'Group 1',students:10,instructor:'Maria Santos',instructors:['Maria Santos'],start:'06:00',end:'14:00',room:'Ward A',type:'Clinical Duty',remarks:''},
+    {id:2,date:'2026-09-22',daysInclusive:'TTH',area:'Rural Health Unit',program:'BS MIDWIFERY',year:'3',section:'Sec B',group:'Group 2',students:8,instructor:'John Dela Cruz',instructors:['John Dela Cruz'],start:'08:00',end:'16:00',room:'RHU',type:'Community Duty',remarks:''},
+    {id:3,date:'2026-09-23',daysInclusive:'MTW',area:'D.O. Plaza Memorial Hospital',program:'BS NURSING',year:'4',section:'Sec A',group:'Group 2',students:10,instructor:'Unassigned',instructors:[],start:'06:00',end:'14:00',room:'Ward A',type:'Clinical Duty',remarks:''},
+    {id:4,date:'2026-09-21',daysInclusive:'WTH',area:'Rural Health Unit',program:'BS NURSING',year:'3',section:'Sec C',group:'Group 3',students:12,instructor:'Maria Santos',instructors:['Maria Santos'],start:'08:00',end:'12:00',room:'ICU',type:'Clinical Duty',remarks:''}
   ],
   salaryRecords: [
     ['03','Skills Laboratory (Capping)','8:00 AM - 5:00 PM',8,'Regular Shift',150],
