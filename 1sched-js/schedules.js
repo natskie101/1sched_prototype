@@ -1,5 +1,5 @@
 ﻿import {state} from './state.js';
-import {esc,get} from './utils.js';
+import {esc,get,hours} from './utils.js';
 import {findConflicts,runConflictCheck} from './conflicts.js';
 
 function uniqueScheduleValues(key){
@@ -19,7 +19,7 @@ function scheduleInstructorCell(schedule){
 }
 
 function getInstructorFieldIds(){
-  return ['fInstructor1', 'fInstructor2', 'fInstructor3'];
+  return Array.from(document.querySelectorAll('.instructor-slot-input'), field => field.id);
 }
 
 function getInstructorFieldValues(){
@@ -55,25 +55,101 @@ function clearDuplicateInstructorFields(){
 
 function renderInstructorSearchFields(selectedNames=[]){
   const instructorNames = state.users.filter(u => u.role === 'INSTRUCTOR').map(u => u.name);
-  const values = ['Instructor 1', 'Instructor 2', 'Instructor 3'];
+  const slotCount = Math.max(3, selectedNames.length);
+  const canAddSlot = selectedNames.length >= slotCount && selectedNames.slice(0, slotCount).every(Boolean);
 
   return `
     <div class="field" style="grid-column:1 / -1;">
       <label>Assigned Instructors</label>
       <div class="multi-search-stack" style="display:grid; gap: 12px; margin-top: 8px;">
-        ${values.map((label, index) => {
+        ${Array.from({length: slotCount}, (_, index) => {
           const value = selectedNames[index] || '';
           return `
             <div class="field">
-              <label>${label}</label>
-              <input id="fInstructor${index + 1}" list="instructorSearchOptions" value="${esc(value)}" placeholder="Search instructor..." style="width:100%;">
+              <label for="fInstructor${index + 1}">Instructor ${index + 1}</label>
+              <input class="instructor-slot-input" id="fInstructor${index + 1}" list="instructorSearchOptions" value="${esc(value)}" placeholder="Search instructor..." style="width:100%;">
             </div>
           `;
         }).join('')}
+        <button class="btn assignment-add-instructor" id="addInstructorSlotButton" type="button" onclick="addInstructorSlot()" ${canAddSlot ? '' : 'hidden'}><i class="fa-solid fa-plus"></i> Add another instructor</button>
       </div>
       <datalist id="instructorSearchOptions">${instructorNames.map(name => `<option value="${esc(name)}"></option>`).join('')}</datalist>
     </div>
   `;
+}
+
+function updateAddInstructorButton(){
+  const fields = getInstructorFieldIds().map(id => get(id)).filter(Boolean);
+  const button = get('addInstructorSlotButton');
+  if (button) button.hidden = !fields.length || fields.some(field => !field.value.trim());
+}
+
+export function addInstructorSlot(){
+  const stack = document.querySelector('.multi-search-stack');
+  const button = get('addInstructorSlotButton');
+  if (!stack || !button) return;
+
+  const nextIndex = stack.querySelectorAll('.instructor-slot-input').length + 1;
+  const field = document.createElement('div');
+  field.className = 'field';
+  field.innerHTML = `<label for="fInstructor${nextIndex}">Instructor ${nextIndex}</label><input class="instructor-slot-input" id="fInstructor${nextIndex}" list="instructorSearchOptions" placeholder="Search instructor..." style="width:100%;">`;
+  stack.insertBefore(field, button);
+
+  const input = field.querySelector('input');
+  input.oninput = () => {
+    clearDuplicateInstructorFields();
+    updateAddInstructorButton();
+    const scheduleId = get('modalBody').dataset.assignmentScheduleId;
+    if (scheduleId) previewAssignment(Number(scheduleId));
+  };
+  input.focus();
+}
+
+function renderAssignmentWorkload(names, scheduleId){
+  if (!names.length) {
+    return '<p class="assignment-workload-empty">Select an instructor to see their current assignments.</p>';
+  }
+
+  return names.map(name => {
+    const assignments = state.schedules.filter(schedule =>
+      schedule.id !== Number(scheduleId) && normalizeScheduleInstructors(schedule).includes(name)
+    );
+    const totalHours = assignments.reduce((total, schedule) => total + hours(schedule.start, schedule.end), 0);
+    const assignmentList = assignments.length
+      ? assignments.map(schedule => `
+          <div class="assignment-workload-row">
+            <strong>Exp ${String(schedule.id).padStart(2, '0')}</strong>
+            <span>${esc(schedule.date)} · ${esc(schedule.daysInclusive || '1 day')} · ${esc(schedule.area)}</span>
+            <span>${esc(schedule.program)} · ${esc(schedule.group)} · ${esc(schedule.start)}-${esc(schedule.end)}</span>
+          </div>
+        `).join('')
+      : '<p class="assignment-workload-empty">No other assigned schedules.</p>';
+
+    return `
+      <div class="assignment-instructor-load">
+        <div class="assignment-load-heading"><strong>${esc(name)}</strong><span>${totalHours} recorded shift hours · ${assignments.length} other ${assignments.length === 1 ? 'schedule' : 'schedules'}</span></div>
+        ${assignmentList}
+      </div>
+    `;
+  }).join('');
+}
+
+function updateAssignmentTarget(schedule){
+  const date = get('fDate')?.value || schedule.date;
+  const dateLabel = date
+    ? new Date(`${date}T00:00:00`).toLocaleDateString('en-US', {month:'short', day:'2-digit', year:'numeric'})
+    : 'Date not set';
+  const start = get('fStart')?.value || schedule.start;
+  const end = get('fEnd')?.value || schedule.end;
+  const area = get('fArea')?.value || schedule.area;
+  const program = get('fProgram')?.value || schedule.program;
+  const year = get('fYear')?.value || schedule.year;
+  const section = get('fSection')?.value || schedule.section;
+  const group = get('fGroup')?.value || schedule.group;
+  const exp = `Exp ${String(schedule.id).padStart(2, '0')}`;
+
+  get('assignTargetShift').textContent = `${exp} · ${area}`;
+  get('assignTargetDetails').textContent = `${dateLabel} (${get('fDaysInclusive')?.value || schedule.daysInclusive || '1 day'}) | ${start} - ${end} | Year ${year} ${section}, ${group} | ${program}`;
 }
 
 function scheduleTable(rows,actions=true){
@@ -117,12 +193,14 @@ export function openScheduleModal(){
   get('modalTitle').textContent='Add New Schedule';
   get('modalBody').innerHTML=`<div class="form-grid"><div class="field"><label>Date</label><input id="fDate" type="date" value="2026-09-24"></div><div class="field"><label>Days Inclusive</label><input id="fDaysInclusive" value="MTW" placeholder="e.g. MTW"></div><div class="field"><label>Clinical Area</label><input id="fArea" value="D.O. Plaza Memorial Hospital"></div><div class="field"><label>Program</label><select id="fProgram"><option>BS NURSING</option><option>BS MIDWIFERY</option></select></div><div class="field"><label>Year Level</label><select id="fYear"><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select></div><div class="field"><label>Section</label><input id="fSection" value="Sec A"></div><div class="field"><label>Group</label><input id="fGroup" value="Group 1"></div><div class="field"><label>Students</label><input id="fStudents" type="number" value="10"></div><div class="field"><label>Room / Area</label><input id="fRoom" value="Ward A"></div><div class="field"><label>Start Time</label><input id="fStart" type="time" value="06:00"></div><div class="field"><label>End Time</label><input id="fEnd" type="time" value="14:00"></div><div class="field"><label>Duty Type</label><select id="fType"><option>Clinical Duty</option><option>Community Duty</option><option>Academic Duty</option><option>Special Duty</option></select></div><div class="field"><label>Remarks</label><input id="fRemarks" value="" placeholder="e.g. DUE"></div>${renderInstructorSearchFields([])}</div><br><button class="btn primary" onclick="saveSchedule()">Create Schedule</button>`;
   get('modal').classList.remove('hidden');
+  get('modalBody').dataset.assignmentScheduleId = '';
   setTimeout(() => {
     getInstructorFieldIds().forEach(id => {
       const field = get(id);
       if (field) {
         field.oninput = () => {
           clearDuplicateInstructorFields();
+          updateAddInstructorButton();
         };
       }
     });
@@ -158,18 +236,81 @@ export function assignInstructor(id){
   const selectedNames = normalizeScheduleInstructors(s);
   const hasCurrent = selectedNames.length > 0;
 
-  get('modalTitle').textContent='Edit Schedule';
+  get('modalTitle').textContent='Assign Clinical Instructor';
   get('modalBody').innerHTML=`<div class="form-grid"><div class="field"><label>Date</label><input id="fDate" type="date" value="${esc(s.date)}"></div><div class="field"><label>Days Inclusive</label><input id="fDaysInclusive" value="${esc(s.daysInclusive || '')}" placeholder="e.g. MTW"></div><div class="field"><label>Clinical Area</label><input id="fArea" value="${esc(s.area)}"></div><div class="field"><label>Program</label><select id="fProgram"><option ${s.program==='BS NURSING'?'selected':''}>BS NURSING</option><option ${s.program==='BS MIDWIFERY'?'selected':''}>BS MIDWIFERY</option></select></div><div class="field"><label>Year Level</label><select id="fYear"><option value="4" ${s.year==='4'?'selected':''}>4</option><option value="3" ${s.year==='3'?'selected':''}>3</option><option value="2" ${s.year==='2'?'selected':''}>2</option><option value="1" ${s.year==='1'?'selected':''}>1</option></select></div><div class="field"><label>Section</label><input id="fSection" value="${esc(s.section || 'Sec A')}"></div><div class="field"><label>Group</label><input id="fGroup" value="${esc(s.group)}"></div><div class="field"><label>Students</label><input id="fStudents" type="number" value="${Number(s.students)||0}"></div><div class="field"><label>Room / Area</label><input id="fRoom" value="${esc(s.room || '')}"></div><div class="field"><label>Start Time</label><input id="fStart" type="time" value="${esc(s.start)}"></div><div class="field"><label>End Time</label><input id="fEnd" type="time" value="${esc(s.end)}"></div><div class="field"><label>Duty Type</label><select id="fType"><option ${s.type==='Clinical Duty'?'selected':''}>Clinical Duty</option><option ${s.type==='Community Duty'?'selected':''}>Community Duty</option><option ${s.type==='Academic Duty'?'selected':''}>Academic Duty</option><option ${s.type==='Special Duty'?'selected':''}>Special Duty</option></select></div><div class="field"><label>Remarks</label><input id="fRemarks" value="${esc(s.remarks || '')}" placeholder="e.g. DUE"></div>${renderInstructorSearchFields(selectedNames)}</div><br><div id="assignCheck" class="card">Select one or more instructors to verify assignment conflicts.</div><br><button class="btn primary" onclick="confirmAssign(${id})">Save Changes</button>${hasCurrent?`<button class="btn warning" onclick="removeAssignment(${id})">Remove Assignment</button>`:''}`;
+  const modalBody = get('modalBody');
+  const scheduleFields = modalBody.querySelector('.form-grid');
+  const instructorFields = modalBody.querySelector('#fInstructor1')?.closest('.multi-search-stack')?.closest('.field');
+  const conflictBox = modalBody.querySelector('#assignCheck');
+  const saveButton = modalBody.querySelector(`button[onclick="confirmAssign(${id})"]`);
+  const removeButton = modalBody.querySelector(`button[onclick="removeAssignment(${id})"]`);
+  instructorFields?.remove();
+  modalBody.innerHTML = `
+    <div class="assignment-dialog">
+      <section class="assignment-target">
+        <span>TARGET CLINICAL SHIFT</span>
+        <strong id="assignTargetShift"></strong>
+        <p id="assignTargetDetails"></p>
+      </section>
+      <section class="assignment-faculty">
+        <div class="assignment-faculty-select">
+          <div class="assignment-section-heading">
+            <span>FACULTY ASSIGNMENT DETAILS</span>
+            <h4>Select Clinical Instructor</h4>
+          </div>
+          <div class="assignment-instructor-fields"></div>
+          <div class="assignment-availability" id="assignmentAvailability"><i class="fa-solid fa-circle"></i><span>Checking availability</span></div>
+        </div>
+        <section class="assignment-workload-panel">
+          <h4>Current Schedule &amp; Workload Overview</h4>
+          <div class="assignment-workload-list" id="assignWorkload"></div>
+        </section>
+      </section>
+      <section class="assignment-schedule-details">
+        <div class="assignment-section-heading">
+          <span>EXISTING SCHEDULE INFORMATION</span>
+          <h4>Schedule Details</h4>
+        </div>
+        <div class="assignment-schedule-fields"></div>
+      </section>
+      <div class="assignment-conflict-panel"></div>
+      <footer class="assignment-actions">
+        <div class="assignment-remove-action"></div>
+        <div class="assignment-primary-actions">
+          <button class="btn" type="button" onclick="closeModal()">Cancel</button>
+          <button class="btn primary" type="button" onclick="confirmAssign(${id})">Confirm Assignment</button>
+        </div>
+      </footer>
+    </div>
+  `;
+  if (instructorFields) modalBody.querySelector('.assignment-instructor-fields').append(instructorFields);
+  if (scheduleFields) modalBody.querySelector('.assignment-schedule-fields').append(scheduleFields);
+  if (conflictBox) modalBody.querySelector('.assignment-conflict-panel').append(conflictBox);
+  if (removeButton) modalBody.querySelector('.assignment-remove-action').append(removeButton);
+  saveButton?.remove();
+  if (!modalBody.querySelector('#assignCheck')) {
+    modalBody.querySelector('.assignment-conflict-panel').innerHTML = '<div id="assignCheck" class="card"></div>';
+  }
+  modalBody.dataset.assignmentScheduleId = String(id);
+  get('modal').classList.add('assignment-modal');
   get('modal').classList.remove('hidden');
+  get('modal').querySelector('.modal-kicker').textContent = 'Assign Clinical Instructor';
+  const modalHeading = get('modalTitle').parentElement;
+  modalHeading.querySelector('.assignment-modal-icon')?.remove();
+  modalHeading.querySelector('.assignment-modal-subtitle')?.remove();
+  modalHeading.insertAdjacentHTML('afterbegin', '<span class="assignment-modal-icon"><i class="fa-solid fa-user-doctor"></i></span>');
+  get('modalTitle').insertAdjacentHTML('afterend', '<p class="assignment-modal-subtitle">Assign an available faculty member to an existing clinical rotation schedule.</p>');
   setTimeout(()=>{
     const date=get('fDate'); const area=get('fArea'); const program=get('fProgram'); const year=get('fYear'); const section=get('fSection'); const group=get('fGroup'); const students=get('fStudents'); const room=get('fRoom'); const start=get('fStart'); const end=get('fEnd'); const type=get('fType');
     getInstructorFieldIds().forEach(idName => {
       const field = get(idName);
       if (field) field.oninput = () => {
         clearDuplicateInstructorFields();
+        updateAddInstructorButton();
         previewAssignment(id);
       };
     });
+    updateAddInstructorButton();
     previewAssignment(id);
     if(date) date.onchange=()=>previewAssignment(id);
     [area,program,year,section,group,students,room,start,end,type].forEach(el=>{ if(el){ el.oninput = ()=> previewAssignment(id); el.onchange = ()=> previewAssignment(id); } });
@@ -180,8 +321,13 @@ export function previewAssignment(id){
   const s=state.schedules.find(x=>x.id===id);
   const names = dedupeInstructorValues(getInstructorFieldValues());
   const box=get('assignCheck');
+  updateAssignmentTarget(s);
+  get('assignWorkload').innerHTML = renderAssignmentWorkload(names, id);
+  const availability = get('assignmentAvailability');
 
   if (!names.length) {
+    availability.classList.remove('is-conflicted');
+    availability.innerHTML='<i class="fa-solid fa-circle"></i><span>Select an instructor to check availability</span>';
     box.innerHTML='<strong class="success-text">No instructor assigned.</strong>';
     return;
   }
@@ -192,6 +338,10 @@ export function previewAssignment(id){
   });
 
   const unique = [...new Map(conflicts.map(item => [`${item.message}|${item.type}|${item.instructor}`, item])).values()];
+  availability.classList.toggle('is-conflicted', unique.length > 0);
+  availability.innerHTML = unique.length
+    ? '<i class="fa-solid fa-circle-exclamation"></i><span>Conflicts detected</span>'
+    : '<i class="fa-solid fa-circle"></i><span>Available for assignment</span>';
   box.innerHTML = unique.length ? `<strong class="danger-text">${unique.length} conflict(s) detected</strong><ul>${unique.map(c => `<li>${esc(c.instructor)}: ${esc(c.message)}</li>`).join('')}</ul>` : '<strong class="success-text">No instructor conflict detected.</strong>';
 }
 
@@ -226,4 +376,4 @@ export function removeAssignment(id){
   runConflictCheck();window.closeModal();window.showPage('schedules');
 }
 
-window.filterSchedules=filterSchedules;window.openScheduleModal=openScheduleModal;window.saveSchedule=saveSchedule;window.deleteSchedule=deleteSchedule;window.confirmDeleteSchedule=confirmDeleteSchedule;window.assignInstructor=assignInstructor;window.previewAssignment=previewAssignment;window.confirmAssign=confirmAssign;window.removeAssignment=removeAssignment;
+window.filterSchedules=filterSchedules;window.openScheduleModal=openScheduleModal;window.saveSchedule=saveSchedule;window.deleteSchedule=deleteSchedule;window.confirmDeleteSchedule=confirmDeleteSchedule;window.assignInstructor=assignInstructor;window.previewAssignment=previewAssignment;window.confirmAssign=confirmAssign;window.removeAssignment=removeAssignment;window.addInstructorSlot=addInstructorSlot;

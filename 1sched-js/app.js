@@ -39,7 +39,14 @@ window.toggleScheduleMenu=function(force){
   subnav.classList.toggle('open',shouldOpen);
   parent.classList.toggle('expanded',shouldOpen);
 };
-export function closeModal(){get('modal').classList.add('hidden');}
+export function closeModal(){
+  const modal = get('modal');
+  modal.classList.add('hidden');
+  modal.classList.remove('assignment-modal');
+  modal.querySelector('.assignment-modal-icon')?.remove();
+  modal.querySelector('.assignment-modal-subtitle')?.remove();
+  modal.querySelector('.modal-kicker').textContent = '1SCHED';
+}
 window.showPage=showPage;
 window.closeModal=closeModal;
 
